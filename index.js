@@ -1,3 +1,4 @@
+'use strict'
 var Obv = require('obv')
 var HashTable = require('./hashtable')
 var Drain = require('pull-stream/sinks/drain')
@@ -15,13 +16,16 @@ module.exports = function (version, hash, getKey, minSlots) {
   return function (log, name) {
     var since = Obv()
     since.set(-1)
+    var ht, buffer
+    var filename = path.join(path.dirname(log.filename), name+'.ht')
+    var state = AtomicFile(filename)
+
     var HT = HashTable(hash, function (data, key) {
       return key === getKey(data)
     }, function (offset, cb) {
       log.get(offset-1, cb)
     })
-    var filename = path.join(path.dirname(log.filename), name+'.ht')
-    var state = AtomicFile(filename)
+
 
     function load (buffer) {
       //number of items / number of slots
@@ -67,13 +71,7 @@ module.exports = function (version, hash, getKey, minSlots) {
       since.set(-1)
     }
 
-    var writing = false
-    var async = AsyncSingle(function (value, _cb) {
-      writing = true
-      function cb (err) {
-        writing = false
-        _cb(err)
-      }
+    var async = AsyncSingle(function (value, cb) {
       if(state) {
         if(value) state.set(value, cb)
         else state.destroy(cb)
@@ -89,13 +87,13 @@ module.exports = function (version, hash, getKey, minSlots) {
           // in the fairly unlikely case that
           // a write happens while we are saving the state
           // copy the state and write to a new buffer
-          var k = ht.add(getKey(data.value), data.seq+1)
-          //write seq
-          buffer.writeUInt32BE(data.seq+1, 8)
-          //write count
-          buffer.writeUInt32BE(buffer.readUInt32BE(12)+1, 12)
 
           if(load(buffer) < 0.6) {
+            ht.add(getKey(data.value), data.seq+1)
+            //write seq
+            buffer.writeUInt32BE(data.seq+1, 8)
+            //write count
+            buffer.writeUInt32BE(buffer.readUInt32BE(12)+1, 12)
             since.set(data.seq)
             async.write(buffer)
           } else {
@@ -107,6 +105,7 @@ module.exports = function (version, hash, getKey, minSlots) {
             rebuild(buffer.readUInt32BE(4)*2)
             return false
           }
+
         }, function (err) {
           if(!rebuilding)
             cb(err !== true ? err : null)
