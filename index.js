@@ -46,7 +46,6 @@ module.exports = function (version, hash, getKey, minSlots) {
         rebuild(_buffer.readUInt32BE(4)*2)
       else {
         ht = HT((buffer = _buffer).slice(16))
-        console.log('LOADED', buffer.readUInt32BE(8)-1)
         since.set(buffer.readUInt32BE(8)-1)
       }
     })
@@ -84,7 +83,8 @@ module.exports = function (version, hash, getKey, minSlots) {
     return {
       methods: {get: 'async', load: 'sync'},
       since: since,
-      createSink: function () {
+      createSink: function (cb) {
+        var rebuilding = false
         return Drain(function (data) {
           // in the fairly unlikely case that
           // a write happens while we are saving the state
@@ -95,8 +95,21 @@ module.exports = function (version, hash, getKey, minSlots) {
           //write count
           buffer.writeUInt32BE(buffer.readUInt32BE(12)+1, 12)
 
-          since.set(data.seq)
-          async.write(buffer)
+          if(load(buffer) < 0.6) {
+            since.set(data.seq)
+            async.write(buffer)
+          } else {
+            rebuilding = true
+            //rebuild the database, which will set since to -1
+            since.once(function (v) {
+              cb()
+            }, false)
+            rebuild(buffer.readUInt32BE(4)*2)
+            return false
+          }
+        }, function (err) {
+          if(!rebuilding)
+            cb(err !== true ? err : null)
         })
       },
       get: function (key, cb) {
@@ -116,10 +129,6 @@ module.exports = function (version, hash, getKey, minSlots) {
     }
   }
 }
-
-
-
-
 
 
 
