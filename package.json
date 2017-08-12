@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "async-single": "^1.0.0",
-    "atomic-file": "^1.1.1",
+    "atomic-file": "^1.1.2",
     "obv": "0.0.1",
     "pull-stream": "^3.6.0"
   },
