@@ -15,10 +15,10 @@
   },
   "devDependencies": {
     "flumecodec": "0.0.0",
-    "flumedb": "^0.3.1",
+    "flumedb": "^0.4.0",
     "flumelog-offset": "^3.2.2",
     "tape": "^4.7.0",
-    "test-flumeview-index": "^1.0.1"
+    "test-flumeview-index": "^2.0.0"
   },
   "scripts": {
     "test": "set -e; for t in test/*.js; do node $t; done"
