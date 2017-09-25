@@ -15,7 +15,6 @@ module.exports = function (version, hash, getKey, minSlots) {
 
   return function (log, name) {
     var since = Obv()
-    since.set(-1)
     var ht, buffer
     var filename = path.join(path.dirname(log.filename), name+'.ht')
     var state = AtomicFile(filename)
@@ -25,7 +24,12 @@ module.exports = function (version, hash, getKey, minSlots) {
     }, function (offset, cb) {
       log.get(offset-1, cb)
     })
-
+      var _seq
+    since(function (value) {
+      if(!_seq) _seq = value
+      else if(value < _seq) throw new Error('seq decreased')
+      _seq = value
+    })
 
     function load (buffer) {
       //number of items / number of slots
@@ -41,7 +45,6 @@ module.exports = function (version, hash, getKey, minSlots) {
       //wrong version, rebuild
       else if (_buffer.readUInt32BE(0) != version)
         //rebuild with same number of slots
-
         rebuild(_buffer.readUInt32BE(4))
 
       //if hashtable is too full, rebuild
@@ -128,6 +131,4 @@ module.exports = function (version, hash, getKey, minSlots) {
     }
   }
 }
-
-
 
