@@ -15,6 +15,7 @@ module.exports = function (hash, matches, get) {
     }
     else {
       slots = buffer.length/size
+      //XXX reads count, but doesn't use update it later!!!
       count = buffer.readUInt32BE(0)
     }
     function _get (i) {
@@ -25,6 +26,8 @@ module.exports = function (hash, matches, get) {
     }
 
     return self = {
+      count: count,
+      slots: slots,
       get: function (key, cb) {
         ;(function next (i) {
           var k = _get(i)
@@ -42,12 +45,16 @@ module.exports = function (hash, matches, get) {
       add: function (key, value) {
         var i = hash(key)
         while(_get(i) !== 0) i++
-        //buffer.writeUInt32BE(value, (i%slots)*size)
         _set(i, value)
+        //XXX what if you add exactly the same thing twice?
         self.count = ++count
         return i
       },
-      buffer: buffer
+      buffer: buffer,
+      load: function () {
+        return count / slots
+      }
     }
   }
 }
+
