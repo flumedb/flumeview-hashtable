@@ -24,7 +24,9 @@ tape('random integers', function (t) {
   t.equal(ht._get(k), r)
   console.log(k, r)
 
+  var c = 0
   for(var i = 0; i < 1000; i++) {
+    c++
     var k = ht.add(i, hash(i+'value'))
     ht.get(i, function (err, j) {
       if(err) throw err
@@ -32,9 +34,14 @@ tape('random integers', function (t) {
     })
     t.notEqual(k, i)
   }
-  console.log(ht.buffer.toString('hex'))
+  console.log(c)
+  //1001 because we add one before the loop
+  t.equal(ht.count, 1001)
+  t.equal(ht.load(), 0.5005)
   t.end()
-
 })
+
+
+
 
 
