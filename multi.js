@@ -9,11 +9,12 @@ module.exports = function (createHashtable, tables) {
     count += tables[i].count
     slots += tables[i].slots
   }
-  console.log("INITIAL", count, slots)
   var self
   return self = {
     count: count,
+
     slots: slots,
+
     get: function (key, cb) {
       ;(function next (i) {
         tables[i].get(key, function (err, value) {
@@ -23,16 +24,20 @@ module.exports = function (createHashtable, tables) {
         })
       })(tables.length-1)
     },
-    add: function (key, value) {
+
+    add: function (key, index) {
       var last = tables[tables.length-1]
       if(last.load() >= 0.5) {
-        console.log("NEW TABLE", last.slots*2)
         tables.push(last = createHashtable(null, last.slots*2))
         self.slots = slots += last.slots
       }
-      last.add(key, value)
-      self.count = ++ count
+      if(last.add(key, index) {
+        self.count = ++ count
+        return true
+      }
+        return false
     },
+
     load: function () {
       return count/slots
     }

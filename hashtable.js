@@ -42,13 +42,20 @@ module.exports = function (hash, matches, get) {
         })(hash(key))
       },
       _get: _get,
-      add: function (key, value) {
+      add: function (key, index) {
         var i = hash(key)
-        while(_get(i) !== 0) i++
-        _set(i, value)
-        //XXX what if you add exactly the same thing twice?
-        self.count = ++count
-        return i
+        while(true) {
+          var j = _get(i)
+          if(j == 0) {
+            _set(i, index)
+            self.count = ++count
+            return true
+          }
+          else if(j === index)
+            return false
+          else
+            i++
+        }
       },
       buffer: buffer,
       load: function () {
@@ -57,4 +64,8 @@ module.exports = function (hash, matches, get) {
     }
   }
 }
+
+
+
+
 
