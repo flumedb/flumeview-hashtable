@@ -14,6 +14,7 @@
     "pull-stream": "^3.6.0"
   },
   "devDependencies": {
+    "deep-equal": "^1.0.1",
     "flumecodec": "0.0.0",
     "flumedb": "^0.4.0",
     "flumelog-offset": "^3.2.2",
