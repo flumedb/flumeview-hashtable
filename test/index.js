@@ -21,7 +21,7 @@ tape('random integers', function (t) {
   var r = hash('hello random'+Date.now())
 
   var k = ht.add('random2'+Date.now(), r)
-  t.equal(ht._get(k), r)
+//  t.equal(ht._get(k), r)
   console.log(k, r)
 
   var c = 0
@@ -41,7 +41,16 @@ tape('random integers', function (t) {
   t.end()
 })
 
+tape('overwrite', function (t) {
 
+  var ht = require('../hashtable')(hash, matches, get)(null, 10)
 
+  t.equal(ht.add(1, 1), true)
+  t.equal(ht.count, 1)
+  t.equal(ht.add(1, 1), false)
+  t.equal(ht.count, 1)
+  console.log(ht.buffer)
+  t.end()
+})
 
 
