@@ -5,6 +5,7 @@ var Drain = require('pull-stream/sinks/drain')
 var AtomicFile = require('atomic-file/buffer')
 var path = require('path')
 var AsyncSingle = require('async-single')
+var Multi = require('./multi')
 //round up to the next power of 2
 function nextPowerOf2 (n) {
   return Math.pow(2, Math.ceil(Math.log(n)/Math.LN2))
@@ -15,7 +16,7 @@ module.exports = function (version, hash, getKey, minSlots) {
 
   return function (log, name) {
     var since = Obv()
-    var ht, buffer
+    var ht, buffer, mt
     var filename = path.join(path.dirname(log.filename), name+'.ht')
     var state = AtomicFile(filename)
 
@@ -24,10 +25,12 @@ module.exports = function (version, hash, getKey, minSlots) {
     }, function (offset, cb) {
       log.get(offset-1, cb)
     })
-      var _seq
+
+    var _seq
     since(function (value) {
       if(!_seq) _seq = value
-      else if(value < _seq) throw new Error('seq decreased')
+      else if(value < _seq)
+        console.error('seq decreased:'+value+', was:'+_seq)
       _seq = value
     })
 
@@ -40,21 +43,30 @@ module.exports = function (version, hash, getKey, minSlots) {
     state.get(function (err, _buffer) {
       //version, items, seq, count, hashtable...
       if('string' == typeof _buffer) throw new Error('expected buffer, found string')
+
+      //TODO: implement restoring for multitable.
+      initialize(minSlots || 65536)
+      /*
       if(!_buffer)
         initialize(minSlots || 65536)
       //wrong version, rebuild
       else if (_buffer.readUInt32BE(0) != version)
         //rebuild with same number of slots
         rebuild(_buffer.readUInt32BE(4))
-
+      */
+      /*
       //if hashtable is too full, rebuild
       else if(load(_buffer) > 0.5)
         //rebuild with double the number of slots
         rebuild(_buffer.readUInt32BE(4)*2)
+      */
+      //TODO: reload multitable from buffer
+      /*
       else {
-        ht = HT((buffer = _buffer).slice(16))
+        mt = HT((buffer = _buffer).slice(16))
         since.set(buffer.readUInt32BE(8)-1)
       }
+      */
     })
 
     function rebuild (target) {
@@ -64,12 +76,16 @@ module.exports = function (version, hash, getKey, minSlots) {
     }
 
     function initialize (target) {
-      buffer = new Buffer(16+target*4)
+      buffer = new Buffer(16+8+target*4)
       buffer.fill(0)
       buffer.writeUInt32BE(version, 0)
       buffer.writeUInt32BE(target, 4)
       //everything after the header is the hashtable
+
+      //write the expected length into the buffer.
+      buffer.writeUInt32BE(target, 16)
       ht = HT(buffer.slice(16))
+      mt = Multi(HT, [ht])
       //sequence and items are already zero
       since.set(-1)
     }
@@ -87,6 +103,17 @@ module.exports = function (version, hash, getKey, minSlots) {
       createSink: function (cb) {
         var rebuilding = false
         return Drain(function (data) {
+
+            mt.add(getKey(data.value), data.seq+1)
+            //write seq
+            //TODO: move counter etc into hashtable code
+            buffer.writeUInt32BE(data.seq+1, 8)
+//            //write count
+//            buffer.writeUInt32BE(buffer.readUInt32BE(12)+1, 12)
+            since.set(data.seq)
+            async.write(buffer)
+
+          /*
           // in the fairly unlikely case that
           // a write happens while we are saving the state
           // copy the state and write to a new buffer
@@ -108,6 +135,7 @@ module.exports = function (version, hash, getKey, minSlots) {
             rebuild(buffer.readUInt32BE(4)*2)
             return false
           }
+          */
 
         }, function (err) {
           if(!rebuilding)
@@ -116,7 +144,7 @@ module.exports = function (version, hash, getKey, minSlots) {
       },
       get: function (key, cb) {
         var called = false
-        ht.get(key, function (err, value) {
+        mt.get(key, function (err, value) {
           if(called) throw new Error('called already!')
           called = true
           cb(err, value)
@@ -131,4 +159,7 @@ module.exports = function (version, hash, getKey, minSlots) {
     }
   }
 }
+
+
+
 

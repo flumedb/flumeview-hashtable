@@ -28,10 +28,10 @@ module.exports = function (createHashtable, tables) {
     add: function (key, index) {
       var last = tables[tables.length-1]
       if(last.load() >= 0.5) {
-        tables.push(last = createHashtable(null, last.slots*2))
+        tables.push(last = createHashtable(last.slots*2))
         self.slots = slots += last.slots
       }
-      if(last.add(key, index) {
+      if(last.add(key, index)) {
         self.count = ++ count
         return true
       }
