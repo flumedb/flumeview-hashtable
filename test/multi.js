@@ -17,7 +17,7 @@ function get(k, cb) {
 tape('growing, with random integers', function (t) {
 
   var createHT = require('../hashtable')(hash, matches, get)
-  var table = createHT(null, 100)
+  var table = createHT(100)
 
   var mt = Multi(createHT, [table])
 
@@ -43,7 +43,7 @@ tape('growing, with random integers', function (t) {
 
 tape('overwrite', function (t) {
   var createHT = require('../hashtable')(hash, matches, get)
-  var mt = Multi(createHT, [createHT(null, 10)])
+  var mt = Multi(createHT, [createHT(10)])
 
   t.equal(mt.add(1, 1), true)
   t.equal(mt.count, 1)
@@ -51,7 +51,4 @@ tape('overwrite', function (t) {
   t.equal(mt.count, 1)
   t.end()
 })
-
-
-
 

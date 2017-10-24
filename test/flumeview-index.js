@@ -17,5 +17,3 @@ require('test-flumeview-index')(function (seed) {
   .use('index', require('../')(1, hash))
 })
 
-
-

@@ -16,7 +16,7 @@ function get(k, cb) {
 
 tape('random integers', function (t) {
 
-  var ht = require('../hashtable')(hash, matches, get)(null, 2000)
+  var ht = require('../hashtable')(hash, matches, get)(2000)
 
   var r = hash('hello random'+Date.now())
 
@@ -43,7 +43,7 @@ tape('random integers', function (t) {
 
 tape('overwrite', function (t) {
 
-  var ht = require('../hashtable')(hash, matches, get)(null, 10)
+  var ht = require('../hashtable')(hash, matches, get)(10)
 
   t.equal(ht.add(1, 1), true)
   t.equal(ht.count, 1)
