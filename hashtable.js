@@ -5,24 +5,32 @@ function NotFound (key) {
 }
 
 module.exports = function (hash, matches, get) {
-  return function (buffer, slots) {
+  return function (buffer) {
+    var size = 4, slots
     var self
-    var size = 4
     var count = 0
-    if(!buffer) {
-      buffer = new Buffer(size*slots)
+    var HEADER = 8 //[slots, count]
+
+    if('number' === typeof buffer) {
+      slots = buffer
+      buffer = new Buffer(HEADER+buffer*size)
       buffer.fill(0)
+      buffer.writeUInt32BE(slots, 0)
     }
     else {
-      slots = buffer.length/size
+      slots = (buffer.length-HEADER)/size
+      var _slots = buffer.readUInt32BE(0)
+      if(_slots != slots)
+        throw new Error('mismatch number of slots, expected:'+_slots + ', got:'+slots)
       //XXX reads count, but doesn't use update it later!!!
-      count = buffer.readUInt32BE(0)
+      count = buffer.readUInt32BE(4)
     }
+
     function _get (i) {
-      return buffer.readUInt32BE((i%slots)*size)
+      return buffer.readUInt32BE(HEADER + (i%slots)*size)
     }
     function _set (i, v) {
-      buffer.writeUInt32BE(v, (i%slots)*size)
+      buffer.writeUInt32BE(v, HEADER + (i%slots)*size)
     }
 
     return self = {
@@ -31,8 +39,9 @@ module.exports = function (hash, matches, get) {
       get: function (key, cb) {
         ;(function next (i) {
           var k = _get(i)
-          if(k === 0)
+          if(k === 0) {
             cb(NotFound(key))
+          }
           else
             get(k, function (err, data) {
               if(err) cb(err)
@@ -46,9 +55,10 @@ module.exports = function (hash, matches, get) {
         var i = hash(key)
         while(true) {
           var j = _get(i)
-          if(j == 0) {
+          if(j === 0) {
             _set(i, index)
-            self.count = ++count
+            buffer.writeUInt32BE(self.count = ++count, 4)
+
             return true
           }
           else if(j === index)
@@ -64,8 +74,4 @@ module.exports = function (hash, matches, get) {
     }
   }
 }
-
-
-
-
 
