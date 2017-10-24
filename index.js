@@ -34,39 +34,12 @@ module.exports = function (version, hash, getKey, minSlots) {
       _seq = value
     })
 
-    function load (buffer) {
-      //number of items / number of slots
-      if(!buffer) return -1
-      return buffer.readUInt32BE(12)/buffer.readUInt32BE(4)
-    }
-
     state.get(function (err, _buffer) {
       //version, items, seq, count, hashtable...
       if('string' == typeof _buffer) throw new Error('expected buffer, found string')
 
       //TODO: implement restoring for multitable.
       initialize(minSlots || 65536)
-      /*
-      if(!_buffer)
-        initialize(minSlots || 65536)
-      //wrong version, rebuild
-      else if (_buffer.readUInt32BE(0) != version)
-        //rebuild with same number of slots
-        rebuild(_buffer.readUInt32BE(4))
-      */
-      /*
-      //if hashtable is too full, rebuild
-      else if(load(_buffer) > 0.5)
-        //rebuild with double the number of slots
-        rebuild(_buffer.readUInt32BE(4)*2)
-      */
-      //TODO: reload multitable from buffer
-      /*
-      else {
-        mt = HT((buffer = _buffer).slice(16))
-        since.set(buffer.readUInt32BE(8)-1)
-      }
-      */
     })
 
     function rebuild (target) {
@@ -108,34 +81,8 @@ module.exports = function (version, hash, getKey, minSlots) {
             //write seq
             //TODO: move counter etc into hashtable code
             buffer.writeUInt32BE(data.seq+1, 8)
-//            //write count
-//            buffer.writeUInt32BE(buffer.readUInt32BE(12)+1, 12)
             since.set(data.seq)
             async.write(buffer)
-
-          /*
-          // in the fairly unlikely case that
-          // a write happens while we are saving the state
-          // copy the state and write to a new buffer
-
-          if(load(buffer) < 0.6) {
-            ht.add(getKey(data.value), data.seq+1)
-            //write seq
-            buffer.writeUInt32BE(data.seq+1, 8)
-            //write count
-            buffer.writeUInt32BE(buffer.readUInt32BE(12)+1, 12)
-            since.set(data.seq)
-            async.write(buffer)
-          } else {
-            rebuilding = true
-            //rebuild the database, which will set since to -1
-            since.once(function (v) {
-              cb()
-            }, false)
-            rebuild(buffer.readUInt32BE(4)*2)
-            return false
-          }
-          */
 
         }, function (err) {
           if(!rebuilding)
@@ -153,13 +100,11 @@ module.exports = function (version, hash, getKey, minSlots) {
       destroy: function (cb) {
         w.write(null, cb)
       },
-      load: function () { return load(buffer) },
+      load: function () { return ht.load() },
       _buffer: function () {return buffer},
       close: function (cb) { cb () }
     }
   }
 }
-
-
 
 
