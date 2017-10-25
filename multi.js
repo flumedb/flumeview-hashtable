@@ -5,6 +5,19 @@
 
 module.exports = function (createHashtable, tables) {
   var count = 0, slots = 0
+  if(Buffer.isBuffer(tables)) {
+    var buffer = tables
+    tables = []
+    var start = 0
+    while(start < buffer.length) {
+      var slots = buffer.readUInt32BE(start)
+      var end = start + 8 + slots * 4
+      console.log(start, end, slots, buffer.slice(start, end).length)
+      tables.push(createHashtable(buffer.slice(start, end)))
+      start = end
+    }
+  }
+
   for(var i = 0; i < tables.length; i++) {
     count += tables[i].count
     slots += tables[i].slots
@@ -35,13 +48,16 @@ module.exports = function (createHashtable, tables) {
         self.count = ++ count
         return true
       }
-        return false
+      return false
     },
 
     load: function () {
       return count/slots
+    },
+
+    buffer: function () {
+      return tables.map(function (e) { return e.buffer })
     }
   }
 }
-
 

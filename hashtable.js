@@ -45,7 +45,9 @@ module.exports = function (hash, matches, get) {
           else
             get(k, function (err, data) {
               if(err) cb(err)
-              else if(matches(data, key)) cb(null, data)
+              else if(matches(data, key)) {
+                cb(null, data)
+              }
               else next(i + 1)
             })
         })(hash(key))

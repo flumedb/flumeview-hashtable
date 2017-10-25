@@ -34,12 +34,23 @@ module.exports = function (version, hash, getKey, minSlots) {
       _seq = value
     })
 
-    state.get(function (err, _buffer) {
+    state.get(function (err, buffer) {
       //version, items, seq, count, hashtable...
-      if('string' == typeof _buffer) throw new Error('expected buffer, found string')
-
+      if('string' == typeof buffer) throw new Error('expected buffer, found string')
       //TODO: implement restoring for multitable.
-      initialize(minSlots || 65536)
+      if(!buffer)
+        initialize(minSlots || 65536)
+      else {
+        console.log("RELOAD", buffer.readUInt32BE(0), buffer.readUInt32BE(4))
+        //check that version is correct
+        if(version !== buffer.readUInt32BE(0))
+          return initialize(minSlots || 65536)
+        else {
+          mt = Multi(HT, buffer.slice(8))
+          console.log("RELOADED", buffer.readUInt32BE(4))
+          since.set(buffer.readUInt32BE(4)-1)
+        }
+      }
     })
 
     function rebuild (target) {
@@ -49,23 +60,21 @@ module.exports = function (version, hash, getKey, minSlots) {
     }
 
     function initialize (target) {
-      buffer = new Buffer(16+8+target*4)
-      buffer.fill(0)
-      buffer.writeUInt32BE(version, 0)
-      buffer.writeUInt32BE(target, 4)
-      //everything after the header is the hashtable
-
-      //write the expected length into the buffer.
-      buffer.writeUInt32BE(target, 16)
-      ht = HT(buffer.slice(16))
-      mt = Multi(HT, [ht])
+      mt = Multi(HT, [HT(target)])
       //sequence and items are already zero
       since.set(-1)
     }
 
+    function getBuffer () {
+      var header = new Buffer(8)
+      header.writeUInt32BE(version, 0)
+      header.writeUInt32BE(since.value+1, 4) //sequence
+      return Buffer.concat([header].concat(mt.buffer()))
+    }
+
     var async = AsyncSingle(function (value, cb) {
       if(state) {
-        if(value) state.set(value, cb)
+        if(value) state.set(getBuffer(), cb)
         else state.destroy(cb)
       } else cb()
     })
@@ -76,14 +85,9 @@ module.exports = function (version, hash, getKey, minSlots) {
       createSink: function (cb) {
         var rebuilding = false
         return Drain(function (data) {
-
-            mt.add(getKey(data.value), data.seq+1)
-            //write seq
-            //TODO: move counter etc into hashtable code
-            buffer.writeUInt32BE(data.seq+1, 8)
-            since.set(data.seq)
-            async.write(buffer)
-
+          mt.add(getKey(data.value), data.seq+1)
+          since.set(data.seq)
+          async.write(mt)
         }, function (err) {
           if(!rebuilding)
             cb(err !== true ? err : null)
@@ -98,13 +102,21 @@ module.exports = function (version, hash, getKey, minSlots) {
         })
       },
       destroy: function (cb) {
-        w.write(null, cb)
+        async.write(null, cb)
       },
       load: function () { return ht.load() },
       _buffer: function () {return buffer},
-      close: function (cb) { cb () }
+      close: function (cb) {
+        async.close(cb)
+      }
     }
   }
 }
+
+
+
+
+
+
 
 
