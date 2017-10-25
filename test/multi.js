@@ -52,3 +52,28 @@ tape('overwrite', function (t) {
   t.end()
 })
 
+tape('restore', function (t) {
+  var createHT = require('../hashtable')(hash, matches, get)
+
+  var createHT = require('../hashtable')(hash, matches, get)
+  var mt = Multi(createHT, [createHT(10)])
+
+  var N = 100
+  for(var i = 0; i < N; i++) {
+    var k = mt.add(i, hash(i+'value'))
+  }
+
+  var buf = Buffer.concat(mt.buffer())
+  var mt2 = Multi(createHT, buf)
+
+  for(var i = 0; i < N; i++) {
+    mt2.get(i, function (err, value) {
+      if(err) throw err
+      t.equal(value, hash(i+'value'))
+    })
+  }
+
+  t.end()
+})
+
+
