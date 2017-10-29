@@ -8,7 +8,7 @@
     "url": "git://github.com/dominictarr/flumeview-hashtable.git"
   },
   "dependencies": {
-    "async-single": "^1.0.3",
+    "async-single": "^1.0.4",
     "atomic-file": "^1.1.3",
     "obv": "0.0.1",
     "pull-stream": "^3.6.0"
