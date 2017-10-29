@@ -1,6 +1,7 @@
 function NotFound (key) {
   var err = new Error('Not Found:'+key)
   err.notFound = true
+  err.name = 'NotFoundError'
   return err
 }
 
