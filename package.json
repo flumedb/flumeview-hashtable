@@ -1,6 +1,6 @@
 {
   "name": "flumeview-hashtable",
-  "description": "",
+  "description": "flumeview key index as a memory hashtable (very fast)",
   "version": "1.0.2",
   "homepage": "https://github.com/dominictarr/flumeview-hashtable",
   "repository": {
@@ -8,7 +8,7 @@
     "url": "git://github.com/dominictarr/flumeview-hashtable.git"
   },
   "dependencies": {
-    "async-single": "^1.0.4",
+    "async-single": "^1.0.5",
     "atomic-file": "^1.1.3",
     "obv": "0.0.1",
     "pull-stream": "^3.6.0"
