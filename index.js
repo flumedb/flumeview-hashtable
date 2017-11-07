@@ -77,7 +77,7 @@ module.exports = function (version, hash, getKey, minSlots) {
         if(value) state.set(getBuffer(), cb)
         else state.destroy(cb)
       } else cb()
-    })
+    }, {min: 100, max: 500})
 
     return {
       methods: {get: 'async', load: 'sync'},
