@@ -1,7 +1,7 @@
 {
   "name": "flumeview-hashtable",
   "description": "flumeview key index as a memory hashtable (very fast)",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "homepage": "https://github.com/dominictarr/flumeview-hashtable",
   "repository": {
     "type": "git",
