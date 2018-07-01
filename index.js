@@ -41,13 +41,11 @@ module.exports = function (version, hash, getKey, minSlots) {
       if(!buffer)
         initialize(minSlots || 65536)
       else {
-        console.log("RELOAD", buffer.readUInt32BE(0), buffer.readUInt32BE(4))
         //check that version is correct
         if(version !== buffer.readUInt32BE(0))
           return initialize(minSlots || 65536)
         else {
           mt = Multi(HT, buffer.slice(8))
-          console.log("RELOADED", buffer.readUInt32BE(4))
           since.set(buffer.readUInt32BE(4)-1)
         }
       }

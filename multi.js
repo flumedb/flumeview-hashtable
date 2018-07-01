@@ -12,7 +12,6 @@ module.exports = function (createHashtable, tables) {
     while(start < buffer.length) {
       var slots = buffer.readUInt32BE(start)
       var end = start + 8 + slots * 4
-      console.log(start, end, slots, buffer.slice(start, end).length)
       tables.push(createHashtable(buffer.slice(start, end)))
       start = end
     }
