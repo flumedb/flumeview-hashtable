@@ -45,14 +45,22 @@ db.append({key: 'foo', value: ...}, function (err) {
 })
 ```
 
+## append-only resize
+
+this implements a simple resize strategy, when the hashtable starts to become saturated,
+a second hashtable twice the size is allocated. when querying, look in the largest
+hashtable first. 
+
 ## TODO
 
-* resize strategy (okay, so it's not really that useful without this)
-* incremental resize
+* migrate records accessed into the large table, and throw out
+the smaller ones when possible.
 * maybe implement multiple records? for not quite unique values?
 * support different key sizes.
 
 ## License
 
 MIT
+
+
 
