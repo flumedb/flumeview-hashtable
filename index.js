@@ -23,7 +23,7 @@ module.exports = function (version, hash, getKey, minSlots) {
     var HT = HashTable(hash, function (data, key) {
       return key === getKey(data)
     }, function (offset, cb) {
-      log.get(offset-1, cb)
+      log.get(offset-1, (err, item) => cb(err, item, offset-1))
     })
 
     var _seq
