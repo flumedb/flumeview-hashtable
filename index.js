@@ -87,7 +87,7 @@ module.exports = function (version, hash, getKey, minSlots) {
     }, {min: 100, max: 500})
 
     return {
-      methods: {get: 'async', load: 'sync'},
+      methods: {get: 'async', load: 'sync', getSeq: 'async'},
       since: since,
       createSink: function (cb) {
         var rebuilding = false
@@ -103,6 +103,14 @@ module.exports = function (version, hash, getKey, minSlots) {
       get: function (key, cb) {
         var called = false
         mt.get(key, function (err, value) {
+          if(called) throw new Error('called already!')
+          called = true
+          cb(err, value)
+        })
+      },
+      getSeq: function (key, cb) {
+        var called = false
+        mt.getSeq(key, function (err, value) {
           if(called) throw new Error('called already!')
           called = true
           cb(err, value)

@@ -53,6 +53,22 @@ module.exports = function (hash, matches, get) {
             })
         })(hash(key))
       },
+      getSeq: function (key, cb) {
+        ;(function next (i) {
+          var k = _get(i)
+          if(k === 0) {
+            cb(NotFound(key))
+          }
+          else
+            get(k, function (err, data) {
+              if(err) cb(err)
+              else if(matches(data, key)) {
+                cb(null, k)
+              }
+              else next(i + 1)
+            })
+        })(hash(key))
+      },
       _get: _get,
       add: function (key, index) {
         var i = hash(key)
