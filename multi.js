@@ -36,15 +36,6 @@ module.exports = function (createHashtable, tables) {
         })
       })(tables.length-1)
     },
-    getSeq: function (key, cb) {
-      ;(function next (i) {
-        tables[i].getSeq(key, function (err, value) {
-          if(value) cb(null, value)
-          else if(i) next(i-1)
-          else cb(err)
-        })
-      })(tables.length-1)
-    },
 
     add: function (key, index) {
       var last = tables[tables.length-1]

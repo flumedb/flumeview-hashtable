@@ -47,23 +47,7 @@ module.exports = function (hash, matches, get) {
             get(k, function (err, data) {
               if(err) cb(err)
               else if(matches(data, key)) {
-                cb(null, data)
-              }
-              else next(i + 1)
-            })
-        })(hash(key))
-      },
-      getSeq: function (key, cb) {
-        ;(function next (i) {
-          var k = _get(i)
-          if(k === 0) {
-            cb(NotFound(key))
-          }
-          else
-            get(k, function (err, data) {
-              if(err) cb(err)
-              else if(matches(data, key)) {
-                cb(null, k)
+                cb(null, data, k)
               }
               else next(i + 1)
             })

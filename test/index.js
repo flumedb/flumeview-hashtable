@@ -29,20 +29,15 @@ tape('random integers', function (t) {
     c++
     var k = ht.add(i, hash(i+'value'))
 
-    ht.get(i, function (err, j) {
+    ht.get(i, function (err, j, seq) {
       if(err) throw err
       t.equal(j, hash(i+'value'))
 
-      // Now that we have the value at that index we want to get `getSeq(i)`
-      // This can be done by getting the sequence number of that index, using
-      // `_get(i)` to get the value at that sequence number, and comparing
-      // that to `j` to ensure it's the same value both ways.
-      ht.getSeq(i, function (err, seq) {
+      // Now we just want to double-check that `seq` actually contains the
+      // value `j` when we look it up manually.
+      ht._get(seq, function (err, val) {
         t.error(err)
-        ht._get(seq, function (err, val) {
-          t.error(err)
-          t.equal(val, j)
-        })
+        t.equal(val, j)
       })
     })
     t.notEqual(k, i)
