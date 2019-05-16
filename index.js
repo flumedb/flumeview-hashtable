@@ -93,10 +93,10 @@ module.exports = function (version, hash, getKey, minSlots) {
       },
       get: function (key, cb) {
         var called = false
-        mt.get(key, function (err, value) {
+        mt.get(key, function (err, value, seq) {
           if(called) throw new Error('called already!')
           called = true
-          cb(err, value)
+          cb(err, value, seq)
         })
       },
       destroy: function (cb) {

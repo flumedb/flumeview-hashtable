@@ -29,8 +29,8 @@ module.exports = function (createHashtable, tables) {
 
     get: function (key, cb) {
       ;(function next (i) {
-        tables[i].get(key, function (err, value) {
-          if(value) cb(null, value)
+        tables[i].get(key, function (err, value, seq) {
+          if(value) cb(null, value, seq)
           else if(i) next(i-1)
           else cb(err)
         })
