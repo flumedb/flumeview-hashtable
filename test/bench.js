@@ -10,11 +10,8 @@ var crypto = require('crypto')
 require('test-flumeview-index/bench')(function (file) {
   return Flume(
     Log(
-      file,
+      file+'/log.offset',
       {blockSize: 1024, codec: require('flumecodec/json')}
     ))
     .use('index', require('../')(1, hash, null, Math.pow(2, 16)))
 })
-
-
-
