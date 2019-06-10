@@ -28,9 +28,17 @@ tape('random integers', function (t) {
   for(var i = 0; i < 1000; i++) {
     c++
     var k = ht.add(i, hash(i+'value'))
-    ht.get(i, function (err, j) {
+
+    ht.get(i, function (err, j, seq) {
       if(err) throw err
       t.equal(j, hash(i+'value'))
+
+      // Now we just want to double-check that `seq` actually contains the
+      // value `j` when we look it up manually.
+      ht._get(seq, function (err, val) {
+        t.error(err)
+        t.equal(val, j)
+      })
     })
     t.notEqual(k, i)
   }
