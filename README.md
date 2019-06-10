@@ -60,7 +60,40 @@ the smaller ones when possible.
 
 ## api
 
-### createHashTable = require('./flumeview-hashtable/hashtable')
+### FlumeViewHashTable = require('flumeview-hashtable')
+
+#### FlumeViewHashTable(version, hash, getKey, minSlots) => fvht
+
+create a flumeview based on a hash table. This view is suitable only
+for unique keys.
+`version` is an integer. If you change any of the supplied functions
+or the version of this library, `version` must be changed.
+
+`hash` and `getKey` are passed to [HashTable](./#HashTable) module.
+see documentation below.
+
+`minSlots` is the size of the smallest hashtable to start with.
+
+`fvht` supports the required flumeview apis (`since, createSink, destroy, close`)
+and also exposes methods `get` and `load`
+
+#### fvht.get(key, cb(err, data))
+
+retrive a record by `key`.
+
+#### fvht.load() => float
+
+returns the current load, `count / slots`. when this is near 0.5 it will make the hashtable
+bigger, which will decrease the load.
+
+### HashTable = require('flumeview-hashtable/hashtable')
+
+create hashtables that look up data asynchronously.
+
+#### HashTable(hash, matches, get) => createHashTable(buffer) => ht
+
+takes `hash` `matches` and `get` and returns a factory function that accepts
+a buffer, and returns a hashtable instance.
 
 ``` js
 //initialize a hash table with
@@ -75,7 +108,7 @@ var ht = createHashTable(1024*1024)
 setting up a new hash table requires passing in 3 methods that will be used
 to hash input values and return results.
 
-#### `hash(key) => index`
+##### `hash(key) => index`
 
 Takes a key (of any type, but that you indend to pass to `ht.add(key, index)` later
 and returns a 32 bit int hash value, that will be used as the index within the hashtable.
@@ -84,45 +117,76 @@ it's okay to just read a integer from it.
 
 `index` must not ever be zero because zero represents an empty space in the filter.
 
-#### matches(data, key) => boolean
+##### `matches(data, key) => boolean`
 
 when you call `get(key, cb)` this method is used to check each value,
 after it is returned by `get`. `data` is the record retrived, and `key` is the query.
 
-#### get(index, cb(err, data))
+##### `get(index, cb(err, data))`
 
 retrive `data` at key.
 if you added `ht.add(key, index)` then did `ht.get(key)` `get(index, cb)` will be called.
 
-### ht.slots => int
+#### `ht.slots => int`
 
 a read only property, the maximum capacity of the hashtable.
 
-### ht.count => int
+#### `ht.count => int`
 
 a read only property, the current occupied capacity of the hashtable.
 hashtables become inefficient when they become full, so usually you want
 to move to a new hashtable when `ht.count >= ht.slots/2`
 
-### ht.add(key, index)
+#### `ht.add(key, index)`
 
 add a `key`, pointing at `index`. `index` must be a 32 bit int.
 The return value for get is expected to be already stored at `index`.
 
-### ht.get(key, cb)
+#### `ht.get(key, cb(err, data))`
 
 retrive a previously added key. This will look up the index, and call `get(index, cb)`
 (which was passed to `createHashTable(hash, matches, get)`).
 
-### ht.buffer => Buffer
+#### `ht.buffer => Buffer`
 
 a read only property. The buffer making up the hash table.
 The first two UInt32LE's (unsigned 32 bit big endian int) store the `slots` and the `count`.
 the rest are slots that may have indexes stored.
 
-### ht.load()
+#### `ht.load()`
 
 return `count / slots` when greater than 0.5 it's time to allocate a new hashtable.
+when a new hashtable is created, it will be twice the size of the previous one.
+
+### createMulti = require('flumeview-hashtable/multi')
+
+create progressively larger hashtables, so they remain efficient.
+
+#### createMulti(createHashTable(buffer)) => MultiHashTable
+
+given the initialized `createHashTable` function, returns an `MultiHashTable` instance.
+this has the same api as HashTable, except it handles resizing automatically.
+
+#### mht.count => int
+
+the number of items currently in the collection of hash tables.
+
+#### mht.slots => int
+
+the number of available slots in the collection of hash tables.
+
+#### mht.get(key, cb(err, data))
+
+call with key and returns the first data found that `matches` the `key`
+
+### mht.add(key, index)
+
+adds `key` to the hashtable. The key is only added to the last created,
+largest hashtable.
+
+### mht.buffer() => [buffer,...]
+
+returns an array of all buffers in the collection of hashtables.
 
 ## License
 
