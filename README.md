@@ -77,7 +77,7 @@ see documentation below.
 `fvht` supports the required flumeview apis (`since, createSink, destroy, close`)
 and also exposes methods `get` and `load`
 
-#### fvht.get(key, cb(err, data))
+#### fvht.get(key, cb(err, data, seq))
 
 retrive a record by `key`.
 
@@ -110,8 +110,11 @@ to hash input values and return results.
 
 ##### `hash(key) => index`
 
-Takes a key (of any type, but that you indend to pass to `ht.add(key, index)` later
+Takes a key (of any type, but that you indend to pass to `ht.add(key, seq)` later
 and returns a 32 bit int hash value, that will be used as the index within the hashtable.
+the value `seq` will be placed at the first empty slot after modulus of `index` and the number
+of slots in the hashtable.
+
 `hash` would usually contain a hash function, but if the key is already a hash,
 it's okay to just read a integer from it.
 
@@ -122,7 +125,7 @@ it's okay to just read a integer from it.
 when you call `get(key, cb)` this method is used to check each value,
 after it is returned by `get`. `data` is the record retrived, and `key` is the query.
 
-##### `get(index, cb(err, data))`
+##### `get(seq, cb(err, data, seq))`
 
 retrive `data` at key.
 if you added `ht.add(key, index)` then did `ht.get(key)` `get(index, cb)` will be called.
@@ -137,14 +140,14 @@ a read only property, the current occupied capacity of the hashtable.
 hashtables become inefficient when they become full, so usually you want
 to move to a new hashtable when `ht.count >= ht.slots/2`
 
-#### `ht.add(key, index)`
+#### `ht.add(key, seq)`
 
-add a `key`, pointing at `index`. `index` must be a 32 bit int.
-The return value for get is expected to be already stored at `index`.
+add a `key`, pointing at `seq`. `seq` must be a 32 bit int.
+The return value for get is expected to be already stored at `seq`.
 
-#### `ht.get(key, cb(err, data))`
+#### `ht.get(key, cb(err, data, seq))`
 
-retrive a previously added key. This will look up the index, and call `get(index, cb)`
+retrive a previously added key. This will look up the `seq`, and call `get(seq, cb)`
 (which was passed to `createHashTable(hash, matches, get)`).
 
 #### `ht.buffer => Buffer`
@@ -175,11 +178,11 @@ the number of items currently in the collection of hash tables.
 
 the number of available slots in the collection of hash tables.
 
-#### mht.get(key, cb(err, data))
+#### mht.get(key, cb(err, data, seq))
 
 call with key and returns the first data found that `matches` the `key`
 
-### mht.add(key, index)
+### mht.add(key, seq)
 
 adds `key` to the hashtable. The key is only added to the last created,
 largest hashtable.
